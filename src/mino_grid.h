@@ -1,0 +1,38 @@
+#pragma once
+
+#include "tetrimino.h"
+
+// Number of squares in the playfield grid. There are 10x20 squares where minos can be placed.
+#define GRID_WIDTH 10u
+#define GRID_HEIGHT 20u
+
+// TODO: we can take this from the texture
+// Pixel width of a single mino in the grid (a square that forms the tetriminos)
+#define MINO_W 25
+
+class MinoGrid {
+private:
+  int width = GRID_WIDTH;
+  int height = GRID_HEIGHT;
+
+public:
+  MinoGrid() {
+    matrix[9][19] = 2;
+    matrix[8][19] = 3;
+    matrix[7][19] = 4;
+  }
+  ~MinoGrid() = default;
+  int matrix[GRID_WIDTH][GRID_HEIGHT] = {{0}};
+  void Draw(int offsetX = 0, int offsetY = 0);
+  void Update();
+
+  // Functions that don't modify the grid matrix
+  bool isRowComplete(int rowNumber) const;
+  bool isValidRowNumber(int rowNumber) const;
+  std::vector<int> getCompletedRows() const;
+
+  // Functions that modify the grid matrix
+  int removeCompletedRows();
+  void removeRow(int rowNumber);
+  void addTetrimino(Tetrimino *tetrimino);
+};
