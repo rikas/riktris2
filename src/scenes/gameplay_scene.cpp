@@ -177,9 +177,11 @@ void GameplayScene::Update() {
       // Check for and clear completed lines
       // int linesCleared = playfield->clearCompletedLines();
       std::vector<int> completedRows = playfield->getCompletedRows();
+      std::cout << "Completed rows: " << completedRows.size() << std::endl;
       if (!completedRows.empty()) {
         // Start animation instead of immediate clearing
-        playfield->startLineClearAnimation(completedRows);
+        // playfield->startLineClearAnimation(completedRows);
+        playfield->executeLineClear();
         handleLineClears(completedRows.size());
       }
 

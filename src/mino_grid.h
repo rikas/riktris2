@@ -12,14 +12,20 @@
 
 class MinoGrid {
 private:
-  int width = GRID_WIDTH;
-  int height = GRID_HEIGHT;
+  uint width = GRID_WIDTH;
+  uint height = GRID_HEIGHT;
 
 public:
   MinoGrid() {
     matrix[9][19] = 2;
     matrix[8][19] = 3;
     matrix[7][19] = 4;
+    matrix[6][19] = 2;
+    matrix[5][19] = 3;
+    matrix[4][19] = 4;
+    matrix[3][19] = 4;
+    matrix[2][19] = 4;
+    matrix[1][19] = 4;
   }
   ~MinoGrid() = default;
   int matrix[GRID_WIDTH][GRID_HEIGHT] = {{0}};
@@ -33,6 +39,5 @@ public:
 
   // Functions that modify the grid matrix
   int removeCompletedRows();
-  void removeRow(int rowNumber);
   void addTetrimino(Tetrimino *tetrimino);
 };

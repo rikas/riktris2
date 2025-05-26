@@ -1,6 +1,8 @@
 #include "mino_grid.h"
 #include "tetrimino.h"
 #include "texture_manager.h"
+#include <iostream>
+#include <ostream>
 
 // When drawing the matrix we are drawing the minos already in place in the grid.
 void MinoGrid::Draw(int offsetX, int offsetY) {
@@ -29,16 +31,21 @@ void MinoGrid::addTetrimino(Tetrimino *tetrimino) {
   for (int x = 0; x < NUMBER_OF_ROTATIONS; x++) {
     for (int y = 0; y < NUMBER_OF_ROTATIONS; y++) {
       if (tetrimino->isFilled(x, y)) {
-        // Add the mino to the matrix. The number will be the mino type + 1 since we can't have it
-        // as zero (if the type == MINO_T).
-        matrix[tetCol + x][tetRow + y] = tetrimino->getShape() + 1;
+        int gridX = tetCol + x;
+        int gridY = tetRow + y;
+
+        if (gridX >= 0 && gridX < width && gridY < height) {
+          // Add the mino to the matrix. The number will be the mino type + 1 since we can't have it
+          // as zero (if the type == MINO_T).
+          matrix[tetCol + x][tetRow + y] = tetrimino->getShape() + 1;
+        }
       }
     }
   }
 }
 
 bool MinoGrid::isValidRowNumber(int rowNumber) const {
-  return rowNumber >= 0 && rowNumber < GRID_HEIGHT;
+  return rowNumber >= 0 && rowNumber < height;
 }
 
 bool MinoGrid::isRowComplete(int rowNumber) const {
@@ -46,7 +53,7 @@ bool MinoGrid::isRowComplete(int rowNumber) const {
     return false; // Invalid row index
   }
 
-  for (int col = 0; col < GRID_WIDTH; col++) {
+  for (int col = 0; col < width; col++) {
     if (!matrix[col][rowNumber]) {
       return false; // Found an empty square in the row
     }
@@ -55,10 +62,11 @@ bool MinoGrid::isRowComplete(int rowNumber) const {
   return true;
 }
 
+// Returns a vector of completed rows, starting from the bottom of the grid. { 19, 18, 17, ... }
 std::vector<int> MinoGrid::getCompletedRows() const {
   std::vector<int> completedRows;
 
-  for (int row = GRID_HEIGHT - 1; row >= 0; row--) {
+  for (int row = height - 1; row >= 0; row--) {
     if (isRowComplete(row)) {
       completedRows.push_back(row);
     }
@@ -71,32 +79,33 @@ int MinoGrid::removeCompletedRows() {
   std::vector<int> completedRows = getCompletedRows();
   int rowsCleared = completedRows.size();
 
+  // No lines to clear
   if (rowsCleared == 0) {
-    return 0; // No lines to clear
+    return 0;
   }
 
-  // Remove rows from bottom to top to avoid index shifting issues.
-  // Since completedRows is already sorted from bottom to top, we can iterate through it directly.
-  for (int row : completedRows) {
-    removeRow(row);
+  // Create a new grid with completed rows removed
+  for (int col = 0; col < width; ++col) {
+    int writeRow = height - 1; // Start from bottom
+
+    // Copy non-completed rows from bottom to top
+    for (int readRow = height - 1; readRow >= 0; --readRow) {
+      // Check if this row should be kept (not in completedRows)
+      bool keepRow =
+          std::find(completedRows.begin(), completedRows.end(), readRow) == completedRows.end();
+
+      if (keepRow) {
+        matrix[col][writeRow] = matrix[col][readRow];
+        --writeRow;
+      }
+    }
+
+    // Fill remaining top rows with zeros
+    while (writeRow >= 0) {
+      matrix[col][writeRow] = 0;
+      --writeRow;
+    }
   }
 
   return rowsCleared;
-}
-
-void MinoGrid::removeRow(int rowNumber) {
-  if (!isValidRowNumber(rowNumber)) {
-    return; // Invalid row index
-  }
-
-  for (int col = 0; col < GRID_WIDTH; col++) {
-    matrix[col][rowNumber] = 0; // Clear the row
-  }
-
-  // Move all rows above down
-  for (int row = rowNumber - 1; row >= 0; row--) {
-    for (int col = 0; col < GRID_WIDTH; col++) {
-      matrix[col][row + 1] = matrix[col][row];
-    }
-  }
 }

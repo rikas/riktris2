@@ -101,30 +101,31 @@ void Playfield::Draw() {
 void Playfield::drawWithAnimation() {}
 
 void Playfield::executeLineClear() {
-  int writeRow = GRID_HEIGHT - 1;
-
-  for (int readRow = GRID_HEIGHT - 1; readRow >= 0; readRow--) {
-    bool isRowToClear =
-        std::find(clearAnimation.rowsToClear.begin(), clearAnimation.rowsToClear.end(), readRow) !=
-        clearAnimation.rowsToClear.end();
-
-    if (!isRowToClear) {
-      if (writeRow != readRow) {
-        for (int col = 0; col < GRID_WIDTH; col++) {
-          grid.matrix[writeRow][col] = grid.matrix[readRow][col];
-        }
-      }
-      writeRow--;
-    }
-  }
-
-  // Clear the top rows
-  while (writeRow >= 0) {
-    for (int col = 0; col < GRID_WIDTH; col++) {
-      grid.matrix[writeRow][col] = 0;
-    }
-    writeRow--;
-  }
+  grid.removeCompletedRows();
+  // int writeRow = GRID_HEIGHT - 1;
+  //
+  // for (int readRow = GRID_HEIGHT - 1; readRow >= 0; readRow--) {
+  //   bool isRowToClear =
+  //       std::find(clearAnimation.rowsToClear.begin(), clearAnimation.rowsToClear.end(), readRow)
+  //       != clearAnimation.rowsToClear.end();
+  //
+  //   if (!isRowToClear) {
+  //     if (writeRow != readRow) {
+  //       for (int col = 0; col < GRID_WIDTH; col++) {
+  //         grid.matrix[writeRow][col] = grid.matrix[readRow][col];
+  //       }
+  //     }
+  //     writeRow--;
+  //   }
+  // }
+  //
+  // // Clear the top rows
+  // while (writeRow >= 0) {
+  //   for (int col = 0; col < GRID_WIDTH; col++) {
+  //     grid.matrix[writeRow][col] = 0;
+  //   }
+  //   writeRow--;
+  // }
 }
 
 bool Playfield::TetriminoOverlapping(Tetrimino *tetrimino) const {

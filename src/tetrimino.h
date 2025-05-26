@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 
-#define TETRIMINO_W 25
 #define NUMBER_OF_ROTATIONS 4
 
 // Because a tetromino is basically a set of 'big pixels' that can be either on or off, it is quite
