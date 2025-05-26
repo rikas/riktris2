@@ -1,5 +1,6 @@
 #pragma once
 
+#include "line_clear_animation.h"
 #include "tetrimino.h"
 
 // Number of squares in the playfield grid. There are 10x20 squares where minos can be placed.
@@ -29,7 +30,8 @@ public:
   }
   ~MinoGrid() = default;
   int matrix[GRID_WIDTH][GRID_HEIGHT] = {{0}};
-  void Draw(int offsetX = 0, int offsetY = 0);
+  void Draw(int offsetX, int offsetY);
+  void drawAnimated(int offsetX, int offsetY, const LineClearAnimation &animation);
   void Update();
 
   // Functions that don't modify the grid matrix

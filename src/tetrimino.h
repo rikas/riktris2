@@ -91,10 +91,10 @@ public:
     this->speed = speed;
     this->shape = shape;
 
-    const std::string mino_filename = "data/gfx/mino_" + MINO_NAMES[shape] + ".png";
+    const std::string mino_filename = "mino_" + MINO_NAMES[shape] + ".png";
     minoTexture = &TextureManager::getInstance().getTexture(mino_filename.c_str());
 
-    const std::string ghost_filename = "data/gfx/mino_ghost_" + MINO_NAMES[shape] + ".png";
+    const std::string ghost_filename = "mino_ghost_" + MINO_NAMES[shape] + ".png";
     ghostTexture = &TextureManager::getInstance().getTexture(ghost_filename.c_str());
 
     reset();

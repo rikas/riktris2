@@ -11,8 +11,11 @@ const Texture2D &TextureManager::getTexture(const std::string &filename) {
 
   if (it == textures.end()) {
     // Load texture if not found
-    std::cout << "Loading texture: " << filename << std::endl;
-    Texture2D texture = LoadTexture(filename.c_str());
+    std::cout << "Loading texture: " << TEXTURES_DIR << filename << std::endl;
+
+    std::string fullPath = TEXTURES_DIR + filename;
+
+    Texture2D texture = LoadTexture(fullPath.c_str());
     textures[filename] = texture;
     return textures[filename];
   }

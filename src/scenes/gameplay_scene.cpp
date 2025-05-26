@@ -168,6 +168,7 @@ void GameplayScene::Update() {
     lockTimer += deltaTime;
 
     if (lockTimer >= LOCK_DELAY) {
+      std::cout << "Locking tetrimino after " << lockTimer << " seconds." << std::endl;
       currentTetrimino->setLocked(true);
       currentTetrimino->setLanded(false);
 
@@ -180,18 +181,20 @@ void GameplayScene::Update() {
       std::cout << "Completed rows: " << completedRows.size() << std::endl;
       if (!completedRows.empty()) {
         // Start animation instead of immediate clearing
-        // playfield->startLineClearAnimation(completedRows);
-        playfield->executeLineClear();
+        playfield->startLineClearAnimation(completedRows);
+        // playfield->executeLineClear();
         handleLineClears(completedRows.size());
       }
 
-      // Generate a new tetrimino
-      currentTetrimino = generateTetrimino();
-
       lockTimer = 0.0f; // Reset lock timer
 
-      Sound lockSfx = SoundManager::getInstance().getSound("lock.wav");
+      Sound lockSfx = SoundManager::getInstance().getSound("soundss.wav");
       PlaySound(lockSfx);
+
+      // Generate a new tetrimino
+      if (!playfield->isAnimationRunning()) {
+        currentTetrimino = generateTetrimino();
+      }
     }
 
     // Reset lock timer if piece moves away from the bottom

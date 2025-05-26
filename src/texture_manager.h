@@ -4,6 +4,8 @@
 #include <string>
 #include <unordered_map>
 
+const std::string TEXTURES_DIR = "data/gfx/";
+
 class TextureManager {
 private:
   std::unordered_map<std::string, Texture2D> textures;

@@ -1,4 +1,5 @@
 #include "mino_grid.h"
+#include "line_clear_animation.h"
 #include "tetrimino.h"
 #include "texture_manager.h"
 #include <iostream>
@@ -10,8 +11,8 @@ void MinoGrid::Draw(int offsetX, int offsetY) {
     for (int y = 0; y < height; y++) {
       if (matrix[x][y]) {
         int minoType = matrix[x][y] - 1; // Adjust for zero-based index
-        const Texture2D &minoTexture = TextureManager::getInstance().getTexture(
-            "data/gfx/mino_" + MINO_NAMES[minoType] + ".png");
+        const Texture2D &minoTexture =
+            TextureManager::getInstance().getTexture("mino_" + MINO_NAMES[minoType] + ".png");
 
         int posX = x * (minoTexture.width + 1);
         int posY = y * (minoTexture.height + 1);
@@ -19,6 +20,34 @@ void MinoGrid::Draw(int offsetX, int offsetY) {
         // Draw the mino by getting the right mino gfx. If we have 1 in the
         // matrix then the mino is zero, since TETRIMINO_TYPE starts at 0.
         DrawTexture(minoTexture, posX + offsetX, posY + offsetY, WHITE);
+      }
+    }
+  }
+}
+
+void MinoGrid::drawAnimated(int offsetX, int offsetY, const LineClearAnimation &animation) {
+  for (int row = 0; row < width; row++) {
+    for (int col = 0; col < height; col++) {
+      if (matrix[row][col]) {
+        int minoType = matrix[row][col] - 1; // Adjust for zero-based index
+        const Texture2D &minoTexture =
+            TextureManager::getInstance().getTexture("mino_" + MINO_NAMES[minoType] + ".png");
+
+        int posX = row * (minoTexture.width + 1);
+        int posY = col * (minoTexture.height + 1);
+
+        if (animation.isActive && animation.rowsToClear.size() > 0 &&
+            std::find(animation.rowsToClear.begin(), animation.rowsToClear.end(), col) !=
+                animation.rowsToClear.end()) {
+          // If the animation is flashing, we might want to skip drawing this mino
+          if (animation.flashCount % 2 == 0 && animation.state == AnimationState::FLASHING) {
+            DrawTexture(minoTexture, posX + offsetX, posY + offsetY, RED);
+          }
+        } else {
+          // Draw the mino by getting the right mino gfx. If we have 1 in the
+          // matrix then the mino is zero, since TETRIMINO_TYPE starts at 0.
+          DrawTexture(minoTexture, posX + offsetX, posY + offsetY, WHITE);
+        }
       }
     }
   }

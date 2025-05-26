@@ -46,7 +46,6 @@ public:
 
   // Drawing with animation support
   void Draw();
-  void drawWithAnimation();
   void drawFlashingRows();
   void drawDroppingRows();
 
