@@ -34,8 +34,8 @@ public:
     playfieldTexture = LoadTexture("data/gfx/playfield.png");
 
     // Center the playfield texture in the window
-    position = {(float)WINDOW_W / 2 - (float)playfieldTexture.width / 2,
-                (float)WINDOW_H / 2 - (float)playfieldTexture.height / 2};
+    position = {(float)GetScreenWidth() / 2 - (float)playfieldTexture.width / 2,
+                (float)GetScreenHeight() / 2 - (float)playfieldTexture.height / 2};
 
     drawStart = {position.x + PLAYFIELD_PADDING_X, position.y + PLAYFIELD_PADDING_Y};
   }
