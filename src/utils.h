@@ -1,7 +1,5 @@
 #pragma once
 
-#include "playfield.h"
-#include "tetrimino.h"
 #include <stdio.h>
 #include <stdlib.h>
 
