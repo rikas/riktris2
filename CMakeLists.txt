@@ -4,11 +4,11 @@ project(raytris)
 find_package(raylib 3.0 REQUIRED) # Requires at least version 3.0
 find_package(PhysFS 3.0 REQUIRED)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # For clangd to be happy
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 file(GLOB_RECURSE SOURCES src/*.c src/*.cpp)
-# file(GLOB_RECURSE SOURCES src/scenes/*.c src/scenes/*.cpp)
 
 link_directories(/opt/homebrew/lib)
 
