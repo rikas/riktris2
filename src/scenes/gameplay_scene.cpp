@@ -1,35 +1,34 @@
 #include "gameplay_scene.h"
 #include "../sound_manager.h"
+#include <iostream>
 #include <raylib.h>
 
 float leftKeyTimer = 0.0f;
 float rightKeyTimer = 0.0f;
 float downKeyTimer = 0.0f;
 float fallTimer = 0.0f;
-float lockTimer = 0.0f;
 
 const float LOCK_DELAY = 0.5f;        // Time before a tetrimino locks in place
 const float KEY_REPEAT_DELAY = 0.15f; // Initial delay before repeating
 const float KEY_REPEAT_RATE = 0.05f;  // Time between repeats
 
 GameplayScene::GameplayScene(const std::string &name) : GameScene(name) {
-  std::cout << "Initializing GameplayScene: " << name << std::endl;
   playfield = new Playfield();
   tetriminoBag = new TetriminoBag();
   currentTetrimino = generateTetrimino();
 
-  SoundManager::getInstance().preloadSound("move_new.wav");
-  SoundManager::getInstance().preloadSound("rotate_new.wav");
-  SoundManager::getInstance().preloadSound("lock.wav");
-  currentLevel = 10;
+  // Preload the sounds that will be used in the scene
+  SoundManager soundManager = SoundManager::getInstance();
+  soundManager.preloadSound("move_new.wav");
+  soundManager.preloadSound("rotate_new.wav");
+  soundManager.preloadSound("lock.wav");
 }
 
+// Official Tetris speed curve (frames at 60 FPS)
+// Level 1: 48 frames = 0.8 seconds
+// Level 2: 43 frames = ~0.72 seconds
+// etc.
 float GameplayScene::getFallSpeed() {
-  // Official Tetris speed curve (frames at 60 FPS)
-  // Level 1: 48 frames = 0.8 seconds
-  // Level 2: 43 frames = ~0.72 seconds
-  // etc.
-
   static const float speeds[] = {
       0.8f,  // Level 1
       0.72f, // Level 2
@@ -87,7 +86,7 @@ void GameplayScene::RotateCurrentTetrimino(ROTATE_DIRECTION direction) {
 // coordinates will be tested for the wall kick.
 //
 // This function will return true if it successfully wall kicked the tetrimino or false otherwise.
-bool GameplayScene::WallKick(int fromRotation, int toRotation) {
+bool GameplayScene::WallKick(int fromRotation, int toRotation) const {
   // Will store the kick coordinates for the given rotation
   KickData kicks;
   KickData *kickData;
@@ -97,8 +96,6 @@ bool GameplayScene::WallKick(int fromRotation, int toRotation) {
   } else {
     kickData = WALL_KICKS;
   }
-
-  std::cout << "Wall kicking from rotation " << fromRotation << " to " << toRotation << std::endl;
 
   if (fromRotation == 0 && toRotation == 1) {
     memcpy(kicks, kickData[0], sizeof(kicks));
@@ -134,6 +131,7 @@ bool GameplayScene::WallKick(int fromRotation, int toRotation) {
   // We couldn't wall kick!
   return false;
 }
+
 void GameplayScene::Update() {
   float deltaTime = GetFrameTime();
 
@@ -148,75 +146,80 @@ void GameplayScene::Update() {
   float currentFallSpeed = getFallSpeed();
   fallTimer += deltaTime;
 
-  if (fallTimer >= currentFallSpeed) {
+  // Check if the current tetrimino should fall 1 row down
+  if (fallTimer >= currentFallSpeed && !currentTetrimino->isLocked()) {
     if (!playfield->isTouchingDown(currentTetrimino)) {
       currentTetrimino->moveDown();
-      currentTetrimino->setLanded(false);
-      lockTimer = 0.0f; // Reset lock timer
+      currentTetrimino->resetLockTimer(); // Reset lock timer
     } else {
-      if (!currentTetrimino->isLanded()) {
+      if (!currentTetrimino->isLocking()) {
         // Just landed
-        currentTetrimino->setLanded(true);
-        lockTimer = 0.0f; // Reset lock timer
+        currentTetrimino->resetLockTimer(); // Reset lock timer
       }
     }
     fallTimer = 0.0f; // Reset fall timer
   }
 
   // Handle lock delay
-  if (currentTetrimino->isLanded()) {
-    lockTimer += deltaTime;
+  if (playfield->isTouchingDown(currentTetrimino) && !currentTetrimino->isLocked()) {
+    currentTetrimino->addToLockTimer(deltaTime);
 
-    if (lockTimer >= LOCK_DELAY) {
-      std::cout << "Locking tetrimino after " << lockTimer << " seconds." << std::endl;
-      currentTetrimino->setLocked(true);
-      currentTetrimino->setLanded(false);
-
-      // Lock the tetrimino in place
-      playfield->addTetriminoToGrid(currentTetrimino);
-
-      // Check for and clear completed lines
-      // int linesCleared = playfield->clearCompletedLines();
-      std::vector<int> completedRows = playfield->getCompletedRows();
-      std::cout << "Completed rows: " << completedRows.size() << std::endl;
-      if (!completedRows.empty()) {
-        // Start animation instead of immediate clearing
-        playfield->startLineClearAnimation(completedRows);
-        // playfield->executeLineClear();
-        handleLineClears(completedRows.size());
-      }
-
-      lockTimer = 0.0f; // Reset lock timer
+    if (currentTetrimino->getLockTimer() >= LOCK_DELAY) {
+      std::cout << "Locking tetrimino after " << currentTetrimino->getLockTimer() << " seconds."
+                << std::endl;
+      currentTetrimino->lock();
 
       Sound lockSfx = SoundManager::getInstance().getSound("soundss.wav");
       PlaySound(lockSfx);
-
-      // Generate a new tetrimino
-      if (!playfield->isAnimationRunning()) {
-        currentTetrimino = generateTetrimino();
-      }
     }
 
     // Reset lock timer if piece moves away from the bottom
-    if (!playfield->isTouchingDown(currentTetrimino)) {
-      currentTetrimino->setLanded(false);
-      lockTimer = 0.0f; // Reset lock timer if piece is moving
+    // if (!playfield->isTouchingDown(currentTetrimino)) {
+    //   currentTetrimino->resetLockTimer(); // Reset lock timer
+    // }
+  }
+
+  if (currentTetrimino->isLocked() && !playfield->isAnimationRunning()) {
+    playfield->addTetriminoToGrid(currentTetrimino); // Add the tetrimino to the grid
+
+    // Check for and clear completed lines
+    // int linesCleared = playfield->clearCompletedLines();
+    std::vector<int> completedRows = playfield->getCompletedRows();
+
+    if (!completedRows.empty()) {
+      // Start animation instead of immediate clearing
+      playfield->startLineClearAnimation(completedRows);
+      // playfield->executeLineClear();
+      handleLineClears(completedRows.size());
     }
+  }
+
+  // Generate a new tetrimino only if the current one is locked and no animation is running
+  if (currentTetrimino->isLocked()) {
+    delete currentTetrimino;                // Clean up the old tetrimino
+    currentTetrimino = generateTetrimino(); // Create a new one
+    return;
   }
 
   handleInput(deltaTime);
 }
 
 void GameplayScene::handleInput(float deltaTime) {
-  // Rotate the tetrimino clockwise
+  /********************************************
+   * UP KEY HANDLING (ROTATION CLOCKWISE)
+   ********************************************/
   if (IsKeyPressed(KEY_UP) && !currentTetrimino->isLocked()) {
     RotateCurrentTetrimino(ROTATE_DIRECTION::RIGHT);
-    lockTimer = 0.0f; // Reset lock timer
+    currentTetrimino->resetLockTimer(); // Reset lock timer
     Sound rotateSfx = SoundManager::getInstance().getSound("rotate_new.wav");
     PlaySound(rotateSfx);
   }
 
+  /********************************************
+   * SPACE KEY HANDLING (HARD DROP)
+   ********************************************/
   if (IsKeyPressed(KEY_SPACE) && !currentTetrimino->isLocked()) {
+    // TODO: this is to be used for points
     int dropDistance = 0;
 
     while (!playfield->isTouchingDown(currentTetrimino)) {
@@ -224,17 +227,22 @@ void GameplayScene::handleInput(float deltaTime) {
       dropDistance++;
     }
 
-    currentTetrimino->setLanded(false);
-    currentTetrimino->setLocked(true);
-    lockTimer = 0.0f; // Reset lock timer
+    currentTetrimino->lock();
 
-    playfield->addTetriminoToGrid(currentTetrimino);
+    // TODO: maybe play a different sound for hard drop
+    Sound lockSfx = SoundManager::getInstance().getSound("soundss.wav");
+    SetSoundPitch(lockSfx, 4.1f);
+    PlaySound(lockSfx);
   }
 
+  /********************************************
+   * RIGHT KEY HANDLING
+   ********************************************/
   if (IsKeyDown(KEY_RIGHT) && !currentTetrimino->isLocked()) {
     if (IsKeyPressed(KEY_RIGHT)) {
       // First press, move immediately
       if (!playfield->isTouchingRight(currentTetrimino)) {
+        currentTetrimino->resetLockTimer(); // Reset lock timer
         currentTetrimino->moveRight();
         Sound moveSfx = SoundManager::getInstance().getSound("move_new.wav");
         PlaySound(moveSfx);
@@ -245,6 +253,7 @@ void GameplayScene::handleInput(float deltaTime) {
       rightKeyTimer -= deltaTime;
       if (rightKeyTimer <= 0.0f) {
         if (!playfield->isTouchingRight(currentTetrimino)) {
+          currentTetrimino->resetLockTimer(); // Reset lock timer
           currentTetrimino->moveRight();
           Sound moveSfx = SoundManager::getInstance().getSound("move_new.wav");
           PlaySound(moveSfx);
@@ -256,13 +265,15 @@ void GameplayScene::handleInput(float deltaTime) {
     rightKeyTimer = 0.0f; // Reset timer when key released
   }
 
+  /********************************************
+   * LEFT KEY HANDLING
+   ********************************************/
   if (IsKeyDown(KEY_LEFT) && !currentTetrimino->isLocked()) {
     if (IsKeyPressed(KEY_LEFT)) {
       // First press, move immediately
       if (!playfield->isTouchingLeft(currentTetrimino)) {
+        currentTetrimino->resetLockTimer(); // Reset lock timer
         currentTetrimino->moveLeft();
-        Sound moveSfx = SoundManager::getInstance().getSound("move_new.wav");
-        PlaySound(moveSfx);
       }
       leftKeyTimer = KEY_REPEAT_DELAY; // Set initial delay
     } else {
@@ -270,9 +281,8 @@ void GameplayScene::handleInput(float deltaTime) {
       leftKeyTimer -= deltaTime;
       if (leftKeyTimer <= 0.0f) {
         if (!playfield->isTouchingLeft(currentTetrimino)) {
+          currentTetrimino->resetLockTimer(); // Reset lock timer
           currentTetrimino->moveLeft();
-          Sound moveSfx = SoundManager::getInstance().getSound("move_new.wav");
-          PlaySound(moveSfx);
         }
         leftKeyTimer = KEY_REPEAT_RATE; // Set repeat rate
       }
@@ -281,12 +291,13 @@ void GameplayScene::handleInput(float deltaTime) {
     leftKeyTimer = 0.0f; // Reset timer when key released
   }
 
+  /********************************************
+   * DOWN KEY HANDLING
+   ********************************************/
   if (IsKeyDown(KEY_DOWN) && !currentTetrimino->isLocked()) {
     if (IsKeyPressed(KEY_DOWN)) {
       if (!playfield->isTouchingDown(currentTetrimino)) {
-        currentTetrimino->moveDown();
-        Sound moveSfx = SoundManager::getInstance().getSound("move_new.wav");
-        PlaySound(moveSfx);
+        currentTetrimino->moveDown(true);
       }
       downKeyTimer = KEY_REPEAT_DELAY; // Set initial delay
     } else {
@@ -294,7 +305,7 @@ void GameplayScene::handleInput(float deltaTime) {
       downKeyTimer -= deltaTime;
       if (downKeyTimer <= 0.0f) {
         if (!playfield->isTouchingDown(currentTetrimino)) {
-          currentTetrimino->moveDown();
+          currentTetrimino->moveDown(false);
         }
         downKeyTimer = KEY_REPEAT_RATE; // Set repeat rate
       }
@@ -363,15 +374,24 @@ void GameplayScene::Draw() {
   playfield->Draw();
 
   DrawText(TextFormat("Score: %ld", currentScore), 10, 20, 15, WHITE);
-  DrawText(TextFormat("Level: %d", currentLevel), 10, 50, 15, WHITE);
-  DrawText(TextFormat("Lines: %d", totalLinesCleared), 10, 80, 15, WHITE);
-  DrawText(TextFormat("lockTimer: %02.02f ms", lockTimer), 10, 110, 15, GREEN);
-  DrawText(TextFormat("fallSpeed: %02.02f", getFallSpeed()), 10, 130, 15, GREEN);
+  DrawText(TextFormat("Level: %d", currentLevel), 10, 40, 15, WHITE);
+  DrawText(TextFormat("Lines: %d", totalLinesCleared), 10, 60, 15, WHITE);
+  DrawText(TextFormat("lockTimer: %02.02f", currentTetrimino->getLockTimer()), 10, 110, 15, GREEN);
+  DrawText(TextFormat("fallSpeed: %02.02f", getFallSpeed()), 10, 130, 15, YELLOW);
+  DrawText(TextFormat("fallTimer: %02.02f", fallTimer), 10, 150, 15, YELLOW);
+  DrawText(TextFormat("deltaTime: %02.02f", GetFrameTime()), 10, 170, 15, YELLOW);
+  DrawText(TextFormat("animating: %s", playfield->isAnimationRunning() ? "TRUE" : "FALSE"), 10, 200,
+           15, BLUE);
 
   Tetrimino *ghostTetrimino = getGhostPiece().release();
 
-  currentTetrimino->Draw(playfield->getDrawStart().x, playfield->getDrawStart().y, MINO_BLOCK);
-  ghostTetrimino->Draw(playfield->getDrawStart().x, playfield->getDrawStart().y, MINO_GHOST);
+  int startX = playfield->getDrawStart().x;
+  int startY = playfield->getDrawStart().y;
+
+  if (!playfield->isAnimationRunning()) {
+    currentTetrimino->Draw(startX, startY, MINO_BLOCK);
+    ghostTetrimino->Draw(startX, startY, MINO_GHOST);
+  }
 
   DrawFPS(WINDOW_W - 30, 0);
 }

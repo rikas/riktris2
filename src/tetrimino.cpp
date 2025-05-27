@@ -11,7 +11,7 @@ void Tetrimino::Draw(int offsetX, int offsetY, MINO_DRAW_TYPE draw_type) {
 
       if (isFilled(x, y)) {
         if (draw_type == MINO_BLOCK) {
-          DrawTexture(*minoTexture, tx, ty, WHITE);
+          DrawTexture(*minoTexture, tx, ty, Fade(WHITE, lockTimer > 0 ? 0.7f - lockTimer : 1));
         } else {
           DrawTexture(*ghostTexture, tx, ty, Fade(WHITE, 0.5f)); // Semi-transparent ghost
         }

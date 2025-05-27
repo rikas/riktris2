@@ -3,7 +3,6 @@
 #include "../playfield.h"
 #include "../tetrimino_bag.h"
 #include "game_scene.h"
-#include <iostream>
 #include <string>
 
 class GameplayScene : public GameScene {
@@ -23,7 +22,7 @@ private:
   static const int TETRIS_LINE_SCORE = 1200;
 
   void RotateCurrentTetrimino(ROTATE_DIRECTION direction);
-  bool WallKick(int fromIndex, int toIndex);
+  bool WallKick(int fromIndex, int toIndex) const;
   float getFallSpeed();
   void handleInput(float deltaTime);
   void handleLineClears(int linesCleared);

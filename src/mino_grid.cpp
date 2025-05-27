@@ -41,7 +41,7 @@ void MinoGrid::drawAnimated(int offsetX, int offsetY, const LineClearAnimation &
                 animation.rowsToClear.end()) {
           // If the animation is flashing, we might want to skip drawing this mino
           if (animation.flashCount % 2 == 0 && animation.state == AnimationState::FLASHING) {
-            DrawTexture(minoTexture, posX + offsetX, posY + offsetY, RED);
+            DrawTexture(minoTexture, posX + offsetX, posY + offsetY, WHITE);
           }
         } else {
           // Draw the mino by getting the right mino gfx. If we have 1 in the

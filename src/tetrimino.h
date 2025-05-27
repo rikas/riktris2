@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sound_manager.h"
 #include "texture_manager.h"
 #include <raylib.h>
 #include <string>
@@ -80,11 +81,14 @@ private:
   int *rotations; // Each tetrimino has 4 rotations, represented as bitmasks
   int rotationIndex;
   int speed;
-  bool imminentDrop;
   bool locked; // This is used to check if the tetrimino is locked in place and cannot move anymore
-  bool landed; // This is used to check if the tetrimino has landed on the playfield
+  float lockTimer = 0.0f; // Timer for locking the tetrimino in place
   int col;
   int row;
+  void playMoveSound() {
+    Sound moveSfx = SoundManager::getInstance().getSound("move_new.wav");
+    PlaySound(moveSfx);
+  }
 
 public:
   Tetrimino(TETRIMINO_SHAPE shape, int speed) : rotations(TETRIMINOS[shape]) {
@@ -108,16 +112,27 @@ public:
   void reset() {
     row = 0;
     col = 3;
-    imminentDrop = false;
     locked = false;
     rotationIndex = 0;
+    lockTimer = 0.0f;
   }
 
   ~Tetrimino() = default;
   void Draw(int offsetX, int offsetY, MINO_DRAW_TYPE draw_type);
-  void moveLeft() { col--; }
-  void moveRight() { col++; }
-  void moveDown() { row++; }
+  void moveLeft() {
+    col--;
+    playMoveSound();
+  }
+  void moveRight() {
+    col++;
+    playMoveSound();
+  }
+  void moveDown(bool withSound = false) {
+    row++;
+    if (withSound) {
+      playMoveSound();
+    }
+  }
   int getCol() const { return col; }
   int getRow() const { return row; }
   void setCol(int newCol) { col = newCol; }
@@ -133,7 +148,12 @@ public:
   TETRIMINO_SHAPE getShape() const { return shape; }
   void Rotate(ROTATE_DIRECTION direction);
   bool isLocked() const { return locked; }
-  bool isLanded() const { return landed; }
-  void setLanded(bool landed) { this->landed = landed; }
-  void setLocked(bool locked) { this->locked = locked; }
+  void lock() {
+    locked = true;
+    resetLockTimer();
+  }
+  void resetLockTimer() { lockTimer = 0.0f; }
+  void addToLockTimer(float deltaTime) { lockTimer += deltaTime; }
+  float getLockTimer() const { return lockTimer; }
+  bool isLocking() const { return lockTimer > 0.0f; }
 };
