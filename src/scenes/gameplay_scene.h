@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../camera_shake.h"
 #include "../playfield.h"
 #include "../tetrimino_bag.h"
 #include "game_scene.h"
@@ -10,6 +11,8 @@ private:
   Playfield *playfield;
   Tetrimino *currentTetrimino;
   TetriminoBag *tetriminoBag;
+  Camera2D camera = {0}; // Camera for the gameplay scene
+  CameraShake cameraShake;
 
   int currentLevel = 1;      // Current level
   long currentScore = 0;     // Current score

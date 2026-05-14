@@ -22,6 +22,11 @@ GameplayScene::GameplayScene(const std::string &name) : GameScene(name) {
   soundManager.preloadSound("move_new.wav");
   soundManager.preloadSound("rotate_new.wav");
   soundManager.preloadSound("lock.wav");
+
+  camera.target = {0, 0};       // Center of the playfield
+  camera.offset = {0.0f, 0.0f}; // No offset for the camera
+  camera.rotation = 0.0f;       // No rotation
+  camera.zoom = 1.0f;           // Default zoom level
 }
 
 // Official Tetris speed curve (frames at 60 FPS)
@@ -138,6 +143,10 @@ void GameplayScene::Update() {
   // Always update animations
   playfield->Update();
 
+  // Update camera shake effect
+  cameraShake.update();
+  cameraShake.applyToCamera(camera, {0, 0});
+
   // Pause game logic during line clear animations
   if (playfield->isAnimationRunning()) {
     return;
@@ -165,8 +174,6 @@ void GameplayScene::Update() {
     currentTetrimino->addToLockTimer(deltaTime);
 
     if (currentTetrimino->getLockTimer() >= LOCK_DELAY) {
-      std::cout << "Locking tetrimino after " << currentTetrimino->getLockTimer() << " seconds."
-                << std::endl;
       currentTetrimino->lock();
 
       Sound lockSfx = SoundManager::getInstance().getSound("soundss.wav");
@@ -189,8 +196,13 @@ void GameplayScene::Update() {
     if (!completedRows.empty()) {
       // Start animation instead of immediate clearing
       playfield->startLineClearAnimation(completedRows);
+      cameraShake.startShake(1.5f * completedRows.size(),
+                             0.2f * completedRows.size()); // Start camera shake effect
+
       // playfield->executeLineClear();
       handleLineClears(completedRows.size());
+      std::string soundFile = "complete_line_" + std::to_string(completedRows.size()) + ".ogg";
+      PlaySound(SoundManager::getInstance().getSound(soundFile.c_str())); // Play line clear sound
     }
   }
 
@@ -205,6 +217,18 @@ void GameplayScene::Update() {
 }
 
 void GameplayScene::handleInput(float deltaTime) {
+  if (IsKeyPressed(KEY_A)) {
+    cameraShake.startShake(1.5f, 0.5f); // Start camera shake effect
+  }
+  if (IsKeyPressed(KEY_S)) {
+    cameraShake.startShake(1.5f * 2, 0.2f * 2); // Start camera shake effect
+  }
+  if (IsKeyPressed(KEY_D)) {
+    cameraShake.startShake(1.5f * 3, 0.2f * 3); // Start camera shake effect
+  }
+  if (IsKeyPressed(KEY_F)) {
+    cameraShake.startShake(1.5f * 4, 0.2f * 4); // Start camera shake effect
+  }
   /********************************************
    * UP KEY HANDLING (ROTATION CLOCKWISE)
    ********************************************/
@@ -371,7 +395,19 @@ void GameplayScene::updateLevel() {
 void GameplayScene::Draw() {
   ClearBackground(BLACK);
 
+  BeginMode2D(camera);
   playfield->Draw();
+
+  auto ghostTetrimino = getGhostPiece();
+
+  int startX = playfield->getDrawStart().x;
+  int startY = playfield->getDrawStart().y;
+
+  if (!playfield->isAnimationRunning()) {
+    currentTetrimino->Draw(startX, startY, MINO_BLOCK);
+    ghostTetrimino->Draw(startX, startY, MINO_GHOST);
+  }
+  EndMode2D();
 
   DrawText(TextFormat("Score: %ld", currentScore), 10, 20, 15, WHITE);
   DrawText(TextFormat("Level: %d", currentLevel), 10, 40, 15, WHITE);
@@ -382,16 +418,5 @@ void GameplayScene::Draw() {
   DrawText(TextFormat("deltaTime: %02.02f", GetFrameTime()), 10, 170, 15, YELLOW);
   DrawText(TextFormat("animating: %s", playfield->isAnimationRunning() ? "TRUE" : "FALSE"), 10, 200,
            15, BLUE);
-
-  Tetrimino *ghostTetrimino = getGhostPiece().release();
-
-  int startX = playfield->getDrawStart().x;
-  int startY = playfield->getDrawStart().y;
-
-  if (!playfield->isAnimationRunning()) {
-    currentTetrimino->Draw(startX, startY, MINO_BLOCK);
-    ghostTetrimino->Draw(startX, startY, MINO_GHOST);
-  }
-
   DrawFPS(WINDOW_W - 30, 0);
 }
