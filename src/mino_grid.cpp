@@ -63,7 +63,7 @@ void MinoGrid::addTetrimino(Tetrimino *tetrimino) {
         int gridX = tetCol + x;
         int gridY = tetRow + y;
 
-        if (gridX >= 0 && gridX < width && gridY < height) {
+        if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height) {
           // Add the mino to the matrix. The number will be the mino type + 1 since we can't have it
           // as zero (if the type == MINO_T).
           matrix[tetCol + x][tetRow + y] = tetrimino->getShape() + 1;
