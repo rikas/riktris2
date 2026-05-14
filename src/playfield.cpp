@@ -155,13 +155,13 @@ bool Playfield::TetriminoOverlapping(Tetrimino *tetrimino) const {
   for (int x = 0; x < NUMBER_OF_ROTATIONS; x++) {
     for (int y = 0; y < NUMBER_OF_ROTATIONS; y++) {
       if (tetrimino->isFilled(x, y)) {
-        // The square is overlapping an existing square in the playfield.
-        if (grid.matrix[tetCol + x][tetRow + y]) {
+        // The square is outside of the playfield!
+        if ((tetCol + x) < 0 || (tetCol + x) > (int)GRID_WIDTH - 1 ||
+            (tetRow + y) < 0 || (tetRow + y) > (int)GRID_HEIGHT - 1) {
           return true;
         }
-        // The square is outside of the playfield!
-        if ((tetCol + x) > ((int)GRID_WIDTH - 1) || (tetRow + y) > ((int)GRID_HEIGHT - 1) ||
-            (tetCol + x) < 0) {
+        // The square is overlapping an existing square in the playfield.
+        if (grid.matrix[tetCol + x][tetRow + y]) {
           return true;
         }
       }
@@ -177,13 +177,17 @@ bool Playfield::isTouchingLeft(Tetrimino *tetrimino) const {
   for (int x = 0; x < NUMBER_OF_ROTATIONS; x++) {
     for (int y = 0; y < NUMBER_OF_ROTATIONS; y++) {
       if (tetrimino->isFilled(x, y)) {
+        int col = tetrimino->getCol() + x;
+        int row = tetrimino->getRow() + y;
         // Touching the left wall
-        if (tetrimino->getCol() + x <= 0) {
+        if (col <= 0) {
           return true;
         }
-
+        if (row < 0 || row >= (int)GRID_HEIGHT) {
+          continue;
+        }
         // Touching existing squares in the field matrix
-        if (grid.matrix[tetrimino->getCol() + x - 1][tetrimino->getRow() + y]) {
+        if (grid.matrix[col - 1][row]) {
           return true;
         }
       }
@@ -198,13 +202,17 @@ bool Playfield::isTouchingRight(Tetrimino *tetrimino) const {
   for (int x = 0; x < NUMBER_OF_ROTATIONS; x++) {
     for (int y = 0; y < NUMBER_OF_ROTATIONS; y++) {
       if (tetrimino->isFilled(x, y)) {
+        int col = tetrimino->getCol() + x;
+        int row = tetrimino->getRow() + y;
         // Touching the right wall
-        if (tetrimino->getCol() + x >= GRID_WIDTH - 1) {
+        if (col >= (int)GRID_WIDTH - 1) {
           return true;
         }
-
+        if (row < 0 || row >= (int)GRID_HEIGHT) {
+          continue;
+        }
         // Touching existing squares in the field matrix
-        if (grid.matrix[tetrimino->getCol() + x + 1][tetrimino->getRow() + y]) {
+        if (grid.matrix[col + 1][row]) {
           return true;
         }
       }
@@ -219,13 +227,17 @@ bool Playfield::isTouchingDown(Tetrimino *tetrimino) const {
   for (int x = 0; x < NUMBER_OF_ROTATIONS; x++) {
     for (int y = 0; y < NUMBER_OF_ROTATIONS; y++) {
       if (tetrimino->isFilled(x, y)) {
+        int col = tetrimino->getCol() + x;
+        int row = tetrimino->getRow() + y;
         // Touching the bottom wall
-        if (tetrimino->getRow() + y >= GRID_HEIGHT - 1) {
+        if (row >= (int)GRID_HEIGHT - 1) {
           return true;
         }
-
+        if (col < 0 || col >= (int)GRID_WIDTH) {
+          continue;
+        }
         // Touching existing squares in the field matrix
-        if (grid.matrix[tetrimino->getCol() + x][tetrimino->getRow() + y + 1]) {
+        if (grid.matrix[col][row + 1]) {
           return true;
         }
       }
